@@ -1,0 +1,70 @@
+Task 16:
+
+>>> RANDOM_INITIALIZATION_VECTOR = generate_random_bytes(BLOCK_SIZE)
+>>> def cbc_bitflipping(byte_string: bytes, encrypt=True)->bytes:
+	if encrypt:
+		prefix = b'comment1=cooking%20MCs;userdata='
+		suffix = b';comment2=%20like%20a%20pound%20of%20bacon'
+		input_string = (prefix + byte_string + suffix).replace(b';', b'";"').replace(b'=', b'"="')
+		return cbc_mode(pkcs7_padding(input_string, BLOCK_SIZE), GLOBAL_KEY, RANDOM_INITIALIZATION_VECTOR, encrypt=True)
+	else:
+		return cbc_mode(byte_string, GLOBAL_KEY, RANDOM_INITIALIZATION_VECTOR, encrypt=False)
+
+	
+>>> def cbc_mode(byte_string: bytes,  key: bytes, initialization_vector: bytes, encrypt: bool = True) -> bytes:
+	if encrypt:
+		previous_block = initialization_vector
+		cipher_text = b''
+		for i in range(int(len(byte_string) / len(key))):
+			plain_text = fixed_xor(byte_string[i * len(key): (i + 1) * len(key)], previous_block)
+			previous_block = aes_in_ecb_mode(plain_text, key, encrypt=True)
+			cipher_text += previous_block
+		return cipher_text
+	else:
+		previous_block = initialization_vector
+		plain_text = b''
+		for i in range(int(len(byte_string) / len(key))):
+			cipher_text = byte_string[i * len(key): (i + 1) * len(key)]
+			plain_text += fixed_xor(aes_in_ecb_mode(cipher_text, key, encrypt=False), previous_block)
+			previous_block = cipher_text
+		return plain_text
+
+	
+>>> def fixed_xor(buffer1: bytes, buffer2: bytes) -> bytes:
+	return bytes([(b1 ^ b2) for b1, b2 in zip(buffer1, buffer2)])
+
+>>> def cbc_bitflipping_check(byte_string:bytes)->bool:
+	decrypted_string = cbc_bitflipping(byte_string, encrypt=False)
+	if b';admin=true;' in decrypted_string:
+		return True
+	else:
+		return False
+
+	
+>>> def cbc_bitflipping_attack(encryptor, checker):
+	num_prefix_blocks = len(commonprefix([encryptor(b''), 
+                                          encryptor(b'A')])) // BLOCK_SIZE + 1
+	encrypted_strings = [encryptor(b'A'*0)]
+	min_addition = None
+	for i in range(1, BLOCK_SIZE):
+		encrypted_strings.append(encryptor(b'A'*i))
+		length_common_prefix = len(commonprefix(encrypted_strings))
+		if length_common_prefix == num_prefix_blocks*BLOCK_SIZE:
+			min_addition = i-1
+			break
+		encrypted_strings = [encrypted_strings[-1]]
+	assert min_addition is not None
+	encrypted = encryptor(b'A'*min_addition + b'xadminxtruex')
+	previous_block = [p for p in encrypted[(num_prefix_blocks-1)*BLOCK_SIZE: num_prefix_blocks*BLOCK_SIZE]]
+	previous_block[0] ^= ord(b'x') ^ ord(b';')
+	previous_block[6] ^= ord(b'x') ^ ord(b'=')
+	previous_block[11] ^= ord(b'x') ^ ord(b';')
+	previous_block = bytes(previous_block)
+	admin_string = encrypted[:(num_prefix_blocks-1)*BLOCK_SIZE] + previous_block + encrypted[num_prefix_blocks*BLOCK_SIZE:]
+	return checker(admin_string)
+
+>>> cbc_bitflipping_attack(cbc_bitflipping, cbc_bitflipping_check)
+
+Output :
+True
+

@@ -1,0 +1,14 @@
+Task 4 : Detect single-character XOR
+
+>>> def single_xor(a):
+	encoded = binascii.unhexlify(a)
+	for xor_key in range(256):
+		decoded = ''.join(chr(b ^ xor_key) for b in encoded)
+		if (decoded.isprintable()) or ( decoded.endswith('\n')):
+			print(xor_key, decoded)
+>>> ciphers = open('testfile.txt').read().splitlines()
+>>> for hexstring in ciphers:
+	single_xor(hexstring)
+Output:
+
+53 Now that the party is jumping

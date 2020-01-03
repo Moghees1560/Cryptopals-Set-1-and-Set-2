@@ -1,0 +1,62 @@
+Task 13 :
+>>> from binascii import unhexlify, b2a_base64, a2b_base64, hexlify
+>>> from Crypto.Cipher import AES
+>>> import random
+>>> import string
+>>> BLOCK_SIZE = 16
+>>> def bytes_to_str(byte_list: bytes) -> str:
+	return "".join(filter(lambda x: x in string.printable, "".join(map(chr, byte_list))))
+
+>>> def aes_in_ecb_mode(byte_string: bytes, key: bytes, encrypt: bool = False) -> bytes:
+	cipher = AES.new(key, AES.MODE_ECB)
+	if encrypt:
+		return cipher.encrypt(byte_string)
+	else:
+		return cipher.decrypt(byte_string)
+
+	
+>>> def cookie_parsing_routine(input_cookie: (str, dict), encode=True)->(dict, str):
+	if encode:
+		return "&".join(["=".join([key, input_cookie[key]]) for key in ["email", "uid", "role"]])
+	else:
+		return {p.split("=")[0].strip(): p.split("=")[1].strip() for p in input_cookie.split("&")}
+
+	
+>>> def profile_for(email_id: str):
+	return cookie_parsing_routine({"email": email_id.replace("&", "").replace("=", ""),
+				       "uid": '10',
+				       "role": 'user'})
+
+>>> def encrypt_user_profile(user_profile: bytes)->bytes:
+	return aes_in_ecb_mode(pkcs7_padding(user_profile, BLOCK_SIZE), GLOBAL_KEY, encrypt=True)
+
+>>> def pkcs7_padding(byte_string: bytes, block_length: int) -> bytes:
+	num_to_pad = block_length - (len(byte_string) % block_length)
+	return byte_string + bytes([num_to_pad]) * num_to_pad
+
+>>> def decrypt_user_profile(encrypted_profile: bytes)->dict:
+	return cookie_parsing_routine(bytes_to_str(aes_in_ecb_mode(encrypted_profile, GLOBAL_KEY, encrypt=False)), encode=False)
+
+>>> def ecb_cut_and_paste(encryptor, profile_maker)->bytes:
+	 admin_email = b'a'*(BLOCK_SIZE - len("email=")) + pkcs7_padding(b'admin', BLOCK_SIZE)
+	 num_blocks = int((len("&uid;=10") + len("email=") + len("&role;="))/BLOCK_SIZE) + 1
+	 user_email = "a"*(num_blocks*BLOCK_SIZE - (len("&uid;=10") + len("email=") + len("&role;=")))
+	 if len(user_email) < 10:
+		 user_email += "a" * BLOCK_SIZE
+	 user_email = user_email[:-10] + "@gmail.com"
+	 admin_email_profile = encryptor(profile_maker(admin_email.decode()).encode("utf-8"))
+	 user_profile = encryptor(profile_maker(user_email).encode("utf-8"))
+	 admin_profile = user_profile[:(num_blocks*BLOCK_SIZE)] + admin_email_profile[BLOCK_SIZE:BLOCK_SIZE*2]
+	 return admin_profile
+
+	
+
+>>> def generate_random_bytes(num_bytes: int) -> bytes:
+	return bytes([random.randint(0, 255) for _ in range(num_bytes)])
+
+>>> GLOBAL_KEY=generate_random_bytes(BLOCK_SIZE)
+>>> decrypt_user_profile(ecb_cut_and_paste(encrypt_user_profile, profile_for))
+
+Output:
+
+{'email': 'a@gmail.com', 'uid': '10', 'role': 'usadmin'}

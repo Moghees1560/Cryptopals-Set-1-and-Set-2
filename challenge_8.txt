@@ -1,0 +1,25 @@
+Task 8:
+
+>>> def count_repetitions(ciphertext, block_size):
+	chunks=[ciphertext[i:i+block_size] for i in range(0, len(ciphertext),block_size)]
+	number_of_repetitions=len(chunks)-len(set(chunks))
+	result={
+		'ciphertext': ciphertext,
+		'repetitions': number_of_repetitions
+		}
+	return result
+
+>>> def main():
+	ciphertext=[bytes.fromhex(line.strip()) for line in open('testfile.txt')]
+	block_size=16
+	repetitions=[count_repetitions(cipher,block_size) for cipher in ciphertext]
+	most_repetitions=sorted(repetitions,key=lambda x:x['repetitions'],reverse=True)[0]
+	print("Ciphertext: {}".format(most_repetitions['ciphertext']))
+	print("Repeating Blocks: {}".format(most_repetitions['repetitions']))
+
+	
+>>> main()
+
+Output:
+Ciphertext: b'\xd8\x80a\x97@\xa8\xa1\x9bx@\xa8\xa3\x1c\x81\n=\x08d\x9a\xf7\r\xc0oO\xd5\xd2\xd6\x9ctL\xd2\x83\xe2\xdd\x05/kd\x1d\xbf\x9d\x11\xb04\x85B\xbbW\x08d\x9a\xf7\r\xc0oO\xd5\xd2\xd6\x9ctL\xd2\x83\x94u\xc9\xdf\xdb\xc1\xd4e\x97\x94\x9d\x9c~\x82\xbfZ\x08d\x9a\xf7\r\xc0oO\xd5\xd2\xd6\x9ctL\xd2\x83\x97\xa9>\xab\x8dj\xec\xd5fH\x91Tx\x9ak\x03\x08d\x9a\xf7\r\xc0oO\xd5\xd2\xd6\x9ctL\xd2\x83\xd4\x03\x18\x0c\x98\xc8\xf6\xdb\x1f*?\x9c@@\xde\xb0\xabQ\xb2\x993\xf2\xc1#\xc5\x83\x86\xb0o\xba\x18j'
+Repeating Blocks: 3

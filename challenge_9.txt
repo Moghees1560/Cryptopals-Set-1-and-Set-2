@@ -1,0 +1,8 @@
+Task 9: 
+>>> from Crypto.Util.Padding import pad
+>>> block_size = 20
+>>> data = b'YELLOW SUBMARINE'
+>>> pad(data, block_size)
+
+Output:
+b'YELLOW SUBMARINE\x04\x04\x04\x04'

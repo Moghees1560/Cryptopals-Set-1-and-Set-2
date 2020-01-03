@@ -1,0 +1,11 @@
+Task 2: Fixed XOR
+
+>>> def fixed_XOR(a,b):
+	if len(a)==len(b):
+		a_1=int(a,16)
+		b_1=int(b,16)
+		res=(a_1)^(b_1)
+		print(hex(res))
+
+>>> fixed_XOR("1c0111001f010100061a024b53535009181c","686974207468652062756c6c277320657965")
+0x746865206b696420646f6e277420706c6179

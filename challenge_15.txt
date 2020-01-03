@@ -1,0 +1,23 @@
+Task 15:
+def pkcs7_padding_validation(byte_string: bytes)->bytes:
+	last_byte = byte_string[-1]
+	if last_byte > len(byte_string):
+		return ValueError("bad padding")
+	for i in range(last_byte, 0, -1):
+		if byte_string[-i] != last_byte:
+			raise ValueError("bad padding")
+	# print (byte_string[:last_byte])
+	return byte_string[:-last_byte]
+
+>>> pkcs7_padding_validation(b'ICE ICE BABY\x04\x04\x04\x04')
+Output:
+b'ICE ICE BABY'
+
+>>> pkcs7_padding_validation(b'ICE ICE BABY\x04\x04\x04\x05')
+Outut:
+Traceback (most recent call last):
+  File "<pyshell#208>", line 1, in <module>
+    pkcs7_padding_validation(b'ICE ICE BABY\x04\x04\x04\x05')
+  File "<pyshell#206>", line 7, in pkcs7_padding_validation
+    raise ValueError("bad padding")
+ValueError: bad padding
